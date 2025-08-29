@@ -8,7 +8,7 @@ export const getProducts = async ()=>{
     return await prisma.product.findMany();
 };
 
-export const getProductsById = async (id: number)=>{
+export const getProductById = async (id: number)=>{
     return await prisma.product.findUnique({where : {id}});
 };
 
