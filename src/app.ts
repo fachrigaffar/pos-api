@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import authRouter from "./routers/authRouter";
 import productRoute from "./routers/productRouter";
+import categoryRoute from "./routers/categoryRouter"
+
 
 const app = express();
 
@@ -11,6 +13,6 @@ app.use(express.json());
 //routes
 app.use("/api/auth", authRouter);
 app.use("/api/products", productRoute)
-
+app.use("/api/categories", categoryRoute);
 
 export default app;
