@@ -5,7 +5,11 @@ export const createProduct = async (data: {name: string; description?: string; p
 };
 
 export const getProducts = async ()=>{
-    return await prisma.product.findMany();
+    return await prisma.product.findMany({
+        include: {
+            category: true,
+        },
+    });
 };
 
 export const getProductById = async (id: number)=>{
