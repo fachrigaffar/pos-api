@@ -1,49 +1,109 @@
 import { Request, Response } from "express";
 import * as productService from "../services/productService";
-
+import path from "path";
+import fs from "fs";
 
 export const createProduct = async (req: Request, res: Response) => {
-    try {
-        const product = await productService.createProduct(req.body);
-        res.status(201).json(product);
-    } catch (error : any) {
-        res.status(400).json({ error: error.message });
-    }
+  try {
+    const { name, description, price, stock, categoryId } = req.body;
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const product = await productService.createProduct({
+      name,
+      description,
+      price: Number(price),
+      stock: stock ? Number(stock) : 0,
+      categoryId: categoryId ? Number(categoryId) : null,
+      imageUrl,
+    });
+    return res.status(201).json(product);
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
 };
 
-export const getProducts = async (req: Request, res: Response) => {
-    try {
-        const products = await productService.getProducts();
-        res.json(products);
-    } catch (error : any) {
-        res.status(400).json({ error: error.message });
-    }
+export const getProducts = async (_req: Request, res: Response) => {
+  try {
+    const products = await productService.getProducts();
+    return res.json(products);
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
 };
 
 export const getProductById = async (req: Request, res: Response) => {
-    try {
-        const product = await productService.getProductById(Number(req.params.id));
-        if(!product) return  res.status(404).json({ error: "Product not found" });
-        res.json(product);
-    } catch (error : any) {
-        res.status(400).json({ error: error.message });
+  try {
+    const id = Number(req.params.id);
+    const product = await productService.getProductById(id);
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
     }
+
+    return res.json(product);
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
 };
 
 export const updateProduct = async (req: Request, res: Response) => {
-    try {
-        const product = await productService.updateProduct(Number(req.params.id), req.body);
-        res.json(product);
-    } catch (error : any) {
-        res.status(400).json({ error: error.message });
+  try {
+    const id = Number(req.params.id);
+    const { name, description, price, stock, categoryId } = req.body;
+
+    const oldProduct = await productService.getProductById(Number(id));
+    if (!oldProduct) {
+      return res.status(404).json({ error: "Product not found" });
     }
-}
+
+    let imageUrl = oldProduct.imageUrl;
+
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+
+      if (oldProduct.imageUrl) {
+        const oldPath = path.join(__dirname, "../../", oldProduct.imageUrl);
+
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+    }
+
+    const product = await productService.updateProduct(id, {
+      name,
+      description,
+      price: Number(price),
+      stock: stock ? Number(stock) : 0,
+      categoryId: categoryId ? Number(categoryId) : null,
+      imageUrl,
+    });
+    return res.json(product);
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
+};
 
 export const deleteProduct = async (req: Request, res: Response) => {
-    try {
-        await productService.deleteProduct(Number(req.params.id));
-        res.json({message : "Product delete successfully"});
-    } catch (error : any) {
-        res.status(400).json({ error: error.message });
+  try {
+    const id = Number(req.params.id);
+    const product = await productService.getProductById(Number(id));
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
     }
+
+    if (product.imageUrl) {
+      const filePath = path.join(__dirname, "../../", product.imageUrl);
+
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+    await productService.deleteProduct(Number(id));
+
+   return res.status(200).json({ message: "Product deleted successfully" });
+  } catch (error: any) {
+    return res.status(400).json({ error: error.message });
+  }
 };
