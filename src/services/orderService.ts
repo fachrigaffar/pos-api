@@ -62,3 +62,32 @@ export const getOrderById = async (id: number, userId: string) => {
     include: { items: { include: { product: true } } },
   });
 };
+
+export const deleteOrder = async (id: number, userId: string) => {
+  return prisma.$transaction(async (tx) => {
+    const order = await tx.order.findFirst({
+      where: { id, userId },
+      include: { items: true },
+    });
+    if (!order) throw new Error("Order not found");
+
+    await Promise.all(
+      order.items.map(async (item) => {
+        const product = await tx.product.findUnique({
+          where: { id: item.productId },
+        });
+        if (product) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: product.stock + item.quantity },
+          });
+        }
+      })
+    );
+
+    await tx.orderItem.deleteMany({ where: { orderId: id } });
+    await tx.order.delete({ where: { id } });
+
+    return { message: "Order deleted successfully" };
+  });
+};

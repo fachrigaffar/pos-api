@@ -62,3 +62,20 @@ export const getOrderById = async (req: Request, res: Response) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+export const deleteOrder = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+    const id = Number(req.params.id);
+    const order = await orderService.deleteOrder(id, userId);
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json({ message: "Order deleted successfully" });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};

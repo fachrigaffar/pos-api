@@ -62,7 +62,7 @@ export const updateProduct = async (req: Request, res: Response) => {
       imageUrl = `/uploads/${req.file.filename}`;
 
       if (oldProduct.imageUrl) {
-        const oldPath = path.join(__dirname, "../../", oldProduct.imageUrl);
+        const oldPath = path.join(__dirname, "../uploads", oldProduct.imageUrl);
 
         if (fs.existsSync(oldPath)) {
           fs.unlinkSync(oldPath);
@@ -94,7 +94,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
     }
 
     if (product.imageUrl) {
-      const filePath = path.join(__dirname, "../../", product.imageUrl);
+      const filePath = path.join(__dirname, "../uploads", product.imageUrl);
 
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
